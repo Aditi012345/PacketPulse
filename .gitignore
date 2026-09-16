@@ -3,3 +3,4 @@
 .ipynb_checkpoints/
 *.pyc
 data/Creating_Samples.ipynb
+.env
