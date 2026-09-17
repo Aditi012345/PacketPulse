@@ -1,25 +1,5 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-                  Model  Train_Accuracy  Test_Accuracy       Gap  Precision   Recall  F1_Score    TN  FP   FN    TP
-Linear Regression (OLS)        0.969859       0.905699  0.064160   0.966259 0.841008  0.899293 10911 331 1792  9479
- Gradient Descent (SGD)        0.555087       0.565362 -0.010275   0.714988 0.219235  0.335574 10257 985 8800  2471
-    Logistic Regression        0.972153       0.905832  0.066321   0.961659 0.845622  0.899915 10862 380 1740  9531
- Naive Bayes (Gaussian)        0.709700       0.646737  0.062962   0.991701 0.296868  0.456948 11214  28 7925  3346
-                    KNN        0.996610       0.925554  0.071056   0.973827 0.874811  0.921668 10977 265 1411  9860
-          Decision Tree        0.953173       0.903745  0.049428   0.935182 0.867891  0.900281 10564 678 1489  9782
-          Random Forest        0.978487       0.910541  0.067947   0.984507 0.834442  0.903285 11094 148 1866  9405
-                XGBoost        0.991149       0.933194  0.057955   0.988497 0.876763  0.929283 11127 115 1389  9882
-       SVM (RBF Kernel)        0.970133       0.926398  0.043735   0.959121 0.890959  0.923785 10814 428 1229 10042
-=======
-=======
->>>>>>> b61c685 (Update Model_Training notebook to reflect new data sources)
         Model  Train_Accuracy  Test_Accuracy      Gap  Precision   Recall  F1_Score    TN  FP   FN    TP
       XGBoost        0.999722       0.937192 0.062530   0.991621 0.881998  0.933603 11158  84 1330  9941
 Random Forest        0.997674       0.933816 0.063858   0.990768 0.875965  0.929836 11150  92 1398  9873
           SVM        0.993800       0.936881 0.056919   0.967356 0.904445  0.934843 10898 344 1077 10194
-<<<<<<< HEAD
 Decision Tree        0.993999       0.934127 0.059872   0.987839 0.879248  0.930385 11120 122 1361  9910
->>>>>>> b61c685 (Update Model_Training notebook to reflect new data sources)
-=======
-Decision Tree        0.993999       0.934127 0.059872   0.987839 0.879248  0.930385 11120 122 1361  9910
->>>>>>> b61c685 (Update Model_Training notebook to reflect new data sources)
