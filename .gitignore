@@ -4,3 +4,5 @@
 *.pyc
 data/Creating_Samples.ipynb
 .env
+.DS_Store
+utils/catboost_info/
