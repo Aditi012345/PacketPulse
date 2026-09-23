@@ -2,11 +2,11 @@ from scapy.all import sniff
 import os
 import pandas as pd
 
-from utils.cicids_flow_features import extract_flow_features, FEATURE_COLUMNS
-from utils.model_loader import load_model
-from utils.predictions import predict_with_model
+from cicids_flow_features import extract_flow_features, FEATURE_COLUMNS
+from model_loader import load_model
+from predictions import predict_with_model
 
-MODEL_PATH = os.path.join("models", "cicids_xgboost.pkl")
+MODEL_PATH = os.path.join("..", "models", "cicids_xgboost.pkl")
 CAPTURE_SECONDS = 10
 
 iface = os.getenv("ifaces")
