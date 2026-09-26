@@ -2,11 +2,12 @@ from scapy.all import sniff
 import os
 import pandas as pd
 
-from cicids_flow_features import extract_flow_features, FEATURE_COLUMNS
-from model_loader import load_model
-from predictions import predict_with_model
+from .cicids_flow_features import extract_flow_features, FEATURE_COLUMNS
+from .model_loader import load_model
+from .predictions import predict_with_model
 
-MODEL_PATH = os.path.join("..", "models", "cicids_xgboost.pkl")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  
+MODEL_PATH = os.path.join(BASE_DIR, "models", "cicids_xgboost.pkl")
 
 
 def run_capture_and_predict(capture_seconds=10):
@@ -44,7 +45,3 @@ def run_capture_and_predict(capture_seconds=10):
 
     return n_packets, n_flows, n_benign, n_threat
 
-
-result = run_capture_and_predict()
-for i in result:
-    print(i)

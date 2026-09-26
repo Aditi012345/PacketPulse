@@ -64,6 +64,7 @@ FEATURE_COLUMNS = [
     "Idle Min",
 ]
 
+
 # CICFlowMeter treats a gap > 1 second as idle (timestamps in microseconds).
 IDLE_THRESHOLD_US = 1_000_000
 
