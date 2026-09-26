@@ -25,7 +25,7 @@ FEATURE_COLUMNS_NSL_KDD = [
  'num_shells', 'num_access_files', 'is_guest_login', 'count', 'srv_count',
  'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate', 'dst_host_count', 'dst_host_srv_count',
  'dst_host_diff_srv_rate', 'dst_host_same_src_port_rate', 'dst_host_srv_diff_host_rate',
- 'dst_host_srv_serror_rate', 'dst_host_srv_rerror_rate', 'attack_binary', 'protocol_type_icmp',
+ 'dst_host_srv_serror_rate', 'dst_host_srv_rerror_rate', 'protocol_type_icmp',
  'protocol_type_tcp', 'protocol_type_udp', 'service_IRC', 'service_X11', 'service_Z39_50',
  'service_aol', 'service_auth', 'service_bgp', 'service_courier', 'service_csnet_ns',
  'service_ctf', 'service_daytime', 'service_discard', 'service_domain', 'service_domain_u',
