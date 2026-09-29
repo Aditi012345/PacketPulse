@@ -20,14 +20,45 @@ def load_resources():
 scaler = load_resources()
 
 FEATURE_COLUMNS_NSL_KDD = [
- 'duration', 'src_bytes', 'dst_bytes', 'land', 'wrong_fragment', 'urgent',
- 'num_failed_logins', 'logged_in', 'root_shell', 'su_attempted', 'num_root', 'num_file_creations',
- 'num_shells', 'num_access_files', 'is_guest_login', 'count', 'srv_count',
- 'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate', 'dst_host_count', 'dst_host_srv_count',
- 'dst_host_diff_srv_rate', 'dst_host_same_src_port_rate', 'dst_host_srv_diff_host_rate',
- 'dst_host_srv_serror_rate', 'dst_host_srv_rerror_rate', 'protocol_type_icmp',
- 'protocol_type_tcp', 'protocol_type_udp', 'service_IRC', 'service_X11', 'service_Z39_50',
- 'service_aol', 'service_auth', 'service_bgp', 'service_courier', 'service_csnet_ns',
+    'duration',
+ 'src_bytes',
+ 'dst_bytes',
+ 'land',
+ 'wrong_fragment',
+ 'urgent',
+ 'num_failed_logins',
+ 'logged_in',
+ 'root_shell',
+ 'su_attempted',
+ 'num_root',
+ 'num_file_creations',
+ 'num_shells',
+ 'num_access_files',
+ 'is_guest_login',
+ 'count',
+ 'srv_count',
+ 'same_srv_rate',
+ 'diff_srv_rate',
+ 'srv_diff_host_rate',
+ 'dst_host_count',
+ 'dst_host_srv_count',
+ 'dst_host_diff_srv_rate',
+ 'dst_host_same_src_port_rate',
+ 'dst_host_srv_diff_host_rate',
+ 'dst_host_srv_serror_rate',
+ 'dst_host_srv_rerror_rate',
+ 'attack_binary',
+ 'protocol_type_icmp',
+ 'protocol_type_tcp',
+ 'protocol_type_udp',
+ 'service_IRC',
+ 'service_X11',
+ 'service_Z39_50',
+ 'service_aol',
+ 'service_auth',
+ 'service_bgp',
+ 'service_courier',
+ 'service_csnet_ns',
  'service_ctf', 'service_daytime', 'service_discard', 'service_domain', 'service_domain_u',
  'service_echo', 'service_eco_i', 'service_ecr_i', 'service_efs', 'service_exec', 'service_finger',
  'service_ftp', 'service_ftp_data', 'service_gopher', 'service_harvest', 'service_hostnames',
@@ -95,7 +126,28 @@ def plot_verdict_bar(n_benign, n_threat, title="Prediction Summary"):
 
 # ---------------- UI ----------------
 st.title("🔐 SentinelNet IDS — Real-Time Intrusion Detection")
-mode = st.selectbox("Choose Mode", ["Live Predicting (Real-Time)", "CSV Predicting (Offline)"])
+
+if "selected_mode" not in st.session_state:
+    st.session_state.selected_mode = "Live Predicting (Real-Time)"
+
+mode_col1, mode_col2 = st.columns(2)
+with mode_col1:
+    with st.container(border=True):
+        st.markdown("### 🟢 Live Predicting (Real-Time)")
+        st.write("Sniff live traffic and score reconstructed flows on the fly.")
+        if st.button("Select Live Mode", use_container_width=True):
+            st.session_state.selected_mode = "Live Predicting (Real-Time)"
+
+with mode_col2:
+    with st.container(border=True):
+        st.markdown("### 📁 CSV Predicting (Offline)")
+        st.write("Upload a dataset CSV and score it against a trained model.")
+        if st.button("Select CSV Mode", use_container_width=True):
+            st.session_state.selected_mode = "CSV Predicting (Offline)"
+
+mode = st.session_state.selected_mode
+st.markdown(f"**Current Mode:** `{mode}`")
+st.markdown("---")
 
 # ---------------- LIVE MODE ----------------
 if mode == "Live Predicting (Real-Time)":
@@ -162,7 +214,14 @@ else:
 
         # Required feature columns
         st.markdown("#### Required Feature Columns")
-        st.dataframe(pd.DataFrame(columns=feature_columns), use_container_width=True)
+        st.markdown("#### Required Feature Columns")
+        FEATURES_PER_ROW = 6
+        for i in range(0, len(feature_columns), FEATURES_PER_ROW):
+            row_features = feature_columns[i:i + FEATURES_PER_ROW]
+            row_cols = st.columns(FEATURES_PER_ROW)
+            for col, feat_name in zip(row_cols, row_features):
+                with col:
+                    st.markdown(f"`{feat_name}`")
 
         sample_csv = pd.DataFrame(columns=feature_columns).to_csv(index=False).encode("utf-8")
         st.download_button(
@@ -171,19 +230,50 @@ else:
             file_name=f"{dataset.lower()}_sample_template.csv",
             mime="text/csv",
         )
-
-        # Model comparison table
-        st.markdown("#### Model Comparison")
+        
         comparison_path = MODEL_COMPARISON_PATHS[dataset]
+        comparison_df = None
         if os.path.exists(comparison_path):
             comparison_df = pd.read_csv(comparison_path)
-            st.dataframe(comparison_df, use_container_width=True)
+            
             available_models = comparison_df["Model"].tolist()
         else:
             st.warning(f"Model comparison file not found at {comparison_path}")
             available_models = list(DATASET_MODELS[dataset].keys())
 
-        model_choice = st.selectbox("Choose Model", available_models)
+        metrics_lookup = {}
+        if comparison_df is not None and "Model" in comparison_df.columns:
+            metrics_lookup = comparison_df.set_index("Model").to_dict(orient="index")
+
+        METRIC_FIELDS = ["Train_Accuracy", "Test_Accuracy", "Precision", "Recall", "F1_Score"]
+
+        # Choose model as cards
+        st.markdown("#### Choose Model")
+        model_key = f"selected_model_{dataset}"
+        if model_key not in st.session_state or st.session_state[model_key] not in available_models:
+            st.session_state[model_key] = available_models[0] if available_models else None
+
+        if available_models:
+            model_cols = st.columns(len(available_models))
+            for col, model_name in zip(model_cols, available_models):
+                with col:
+                    with st.container(border=True):
+                        st.markdown(f"**{model_name}**")
+                        metrics = metrics_lookup.get(model_name)
+                        if metrics:
+                            for field in METRIC_FIELDS:
+                                if field in metrics:
+                                    st.caption(f"{field}: {metrics[field]}")
+                        is_selected = st.session_state[model_key] == model_name
+                        btn_label = "✅ Selected" if is_selected else "Select"
+                        if st.button(btn_label, key=f"model_btn_{dataset}_{model_name}", use_container_width=True):
+                            st.session_state[model_key] = model_name
+        else:
+            st.warning("No models available for this dataset.")
+
+        model_choice = st.session_state[model_key]
+        if model_choice:
+            st.markdown(f"**Chosen Model:** `{model_choice}`")
 
         st.markdown("#### Upload Data for Prediction")
         uploaded = st.file_uploader("Upload CSV File", type=["csv"], key=f"uploader_{dataset}")
