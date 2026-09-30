@@ -47,7 +47,6 @@ FEATURE_COLUMNS_NSL_KDD = [
  'dst_host_srv_diff_host_rate',
  'dst_host_srv_serror_rate',
  'dst_host_srv_rerror_rate',
- 'attack_binary',
  'protocol_type_icmp',
  'protocol_type_tcp',
  'protocol_type_udp',
@@ -94,11 +93,6 @@ MODELS_CIC_IDS = {
     "XGBoost": "models/cicids_xgboost.pkl"
 }
 
-MODEL_COMPARISON_PATHS = {
-    "NSL_KDD": "data/nsl_kdd_model_comparison.csv",
-    "CICIDS": "data/cicids_model_comparison.csv",
-}
-
 DATASET_FEATURES = {
     "NSL_KDD": FEATURE_COLUMNS_NSL_KDD,
     "CICIDS": FEATURE_COLUMNS_CICIDS,
@@ -107,6 +101,11 @@ DATASET_FEATURES = {
 DATASET_MODELS = {
     "NSL_KDD": MODELS_NSL_KDD,
     "CICIDS": MODELS_CIC_IDS,
+}
+
+DATASET_METRICS_IMAGES = {
+    "NSL_KDD": "assets/NSL_KDD_Metrics.jpeg",
+    "CICIDS": "assets/CICIDS_Metrics.jpeg",
 }
 
 
@@ -128,7 +127,7 @@ def plot_verdict_bar(n_benign, n_threat, title="Prediction Summary"):
 st.title("🔐 SentinelNet IDS — Real-Time Intrusion Detection")
 
 if "selected_mode" not in st.session_state:
-    st.session_state.selected_mode = "Live Predicting (Real-Time)"
+    st.session_state.selected_mode = None
 
 mode_col1, mode_col2 = st.columns(2)
 with mode_col1:
@@ -146,11 +145,39 @@ with mode_col2:
             st.session_state.selected_mode = "CSV Predicting (Offline)"
 
 mode = st.session_state.selected_mode
-st.markdown(f"**Current Mode:** `{mode}`")
 st.markdown("---")
 
+# ---------------- WELCOME / INFO ----------------
+if mode is None:
+    st.markdown("## Welcome to SentinelNet IDS 👋")
+    st.markdown(
+        "SentinelNet IDS is a network intrusion detection dashboard that lets you "
+        "score network traffic for **benign vs. attack** behaviour using trained "
+        "machine-learning models, either live off the wire or offline from a CSV file."
+    )
+
+    info_col1, info_col2 = st.columns(2)
+    with info_col1:
+        st.markdown("#### 🟢 Live Predicting (Real-Time)")
+        st.markdown(
+            "- Sniffs live packets off your network interface for a duration you choose\n"
+            "- Reconstructs bidirectional flows from the raw capture\n"
+            "- Scores each flow with the CICIDS XGBoost model\n"
+            "- Reports counts of normal vs. attack flows with a live chart"
+        )
+    with info_col2:
+        st.markdown("#### 📁 CSV Predicting (Offline)")
+        st.markdown(
+            "- Choose between the **NSL-KDD** or **CICIDS** feature schema\n"
+            "- See the exact feature columns your CSV must contain, plus a downloadable template\n"
+            "- Compare available models by their performance metrics\n"
+            "- Pick a model and upload a CSV to get instant predictions and a results chart"
+        )
+
+    st.info("Pick **Live Predicting** or **CSV Predicting** above to get started.")
+
 # ---------------- LIVE MODE ----------------
-if mode == "Live Predicting (Real-Time)":
+elif mode == "Live Predicting (Real-Time)":
     st.subheader("Live Network Protection")
     col1, col2 = st.columns([1, 3])
 
@@ -214,7 +241,6 @@ else:
 
         # Required feature columns
         st.markdown("#### Required Feature Columns")
-        st.markdown("#### Required Feature Columns")
         FEATURES_PER_ROW = 6
         for i in range(0, len(feature_columns), FEATURES_PER_ROW):
             row_features = feature_columns[i:i + FEATURES_PER_ROW]
@@ -230,22 +256,16 @@ else:
             file_name=f"{dataset.lower()}_sample_template.csv",
             mime="text/csv",
         )
-        
-        comparison_path = MODEL_COMPARISON_PATHS[dataset]
-        comparison_df = None
-        if os.path.exists(comparison_path):
-            comparison_df = pd.read_csv(comparison_path)
-            
-            available_models = comparison_df["Model"].tolist()
+
+        # Model performance metrics (image asset)
+        st.markdown("#### Model Comparison")
+        metrics_image_path = DATASET_METRICS_IMAGES[dataset]
+        if os.path.exists(metrics_image_path):
+            st.image(metrics_image_path, use_container_width=True)
         else:
-            st.warning(f"Model comparison file not found at {comparison_path}")
-            available_models = list(DATASET_MODELS[dataset].keys())
+            st.warning(f"Metrics image not found at {metrics_image_path}")
 
-        metrics_lookup = {}
-        if comparison_df is not None and "Model" in comparison_df.columns:
-            metrics_lookup = comparison_df.set_index("Model").to_dict(orient="index")
-
-        METRIC_FIELDS = ["Train_Accuracy", "Test_Accuracy", "Precision", "Recall", "F1_Score"]
+        available_models = list(DATASET_MODELS[dataset].keys())
 
         # Choose model as cards
         st.markdown("#### Choose Model")
@@ -259,11 +279,6 @@ else:
                 with col:
                     with st.container(border=True):
                         st.markdown(f"**{model_name}**")
-                        metrics = metrics_lookup.get(model_name)
-                        if metrics:
-                            for field in METRIC_FIELDS:
-                                if field in metrics:
-                                    st.caption(f"{field}: {metrics[field]}")
                         is_selected = st.session_state[model_key] == model_name
                         btn_label = "✅ Selected" if is_selected else "Select"
                         if st.button(btn_label, key=f"model_btn_{dataset}_{model_name}", use_container_width=True):
