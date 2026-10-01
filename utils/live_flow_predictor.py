@@ -25,6 +25,7 @@ def run_capture_and_predict(capture_seconds=10):
     n_flows = len(df)
     n_benign = 0
     n_threat = 0
+    scored = pd.DataFrame()          # <-- new: empty by default
 
     if df.empty:
         print("No IP flows to score. Generate traffic and try again.")
@@ -34,7 +35,9 @@ def run_capture_and_predict(capture_seconds=10):
         preds = predict_with_model(model, X)
         threat_scores = model.predict_proba(X)[:, 1] if hasattr(model, "predict_proba") else preds
 
-        scored = df[["Destination Port"]].copy()
+        # <-- changed: keep a few extra columns so the table is more informative
+        scored = df[["Destination Port", "Flow Duration",
+                     "Total Fwd Packets", "Total Backward Packets"]].copy()
         scored["prediction"] = preds
         scored["threat_probability"] = threat_scores
         scored["verdict"] = scored["prediction"].map({0: "BENIGN", 1: "THREAT"})
@@ -43,5 +46,4 @@ def run_capture_and_predict(capture_seconds=10):
         n_benign = int((scored["prediction"] == 0).sum())
         print(f"\nXGBoost verdicts: {n_benign} BENIGN, {n_threat} THREAT (of {len(scored)} flows)")
 
-    return n_packets, n_flows, n_benign, n_threat
-
+    return n_packets, n_flows, n_benign, n_threat, scored   # <-- new return value

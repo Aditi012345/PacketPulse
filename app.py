@@ -111,7 +111,7 @@ DATASET_METRICS_IMAGES = {
 
 def plot_verdict_bar(n_benign, n_threat, title="Prediction Summary"):
     """Bar chart with benign in green and attacks/threats in red."""
-    fig, ax = plt.subplots(figsize=(4, 4))
+    fig, ax = plt.subplots(figsize=(3, 3))
     labels = ["Normal", "Attack"]
     values = [n_benign, n_threat]
     colors = ["green", "red"]
@@ -120,6 +120,7 @@ def plot_verdict_bar(n_benign, n_threat, title="Prediction Summary"):
     ax.set_title(title)
     for i, v in enumerate(values):
         ax.text(i, v, str(v), ha="center", va="bottom")
+    fig.tight_layout()
     return fig
 
 
@@ -194,7 +195,7 @@ elif mode == "Live Predicting (Real-Time)":
 
     if start_btn:
         status_box.info(f"Capturing traffic for {capture_seconds} seconds... generate traffic (open YouTube / ping google.com).")
-        n_packets, n_flows, n_benign, n_threat = run_capture_and_predict(int(capture_seconds))
+        n_packets, n_flows, n_benign, n_threat, scored = run_capture_and_predict(int(capture_seconds))
 
         status_box.success(f"Captured {n_packets} packets — reconstructed {n_flows} flows")
 
@@ -207,7 +208,37 @@ elif mode == "Live Predicting (Real-Time)":
         """, unsafe_allow_html=True)
 
         fig = plot_verdict_bar(n_benign, n_threat, title="Live Capture Verdicts")
-        chart_box.pyplot(fig, use_container_width=True)
+        chart_box.pyplot(fig, use_container_width=False)
+        if not scored.empty:
+            display = scored.rename(columns={
+                "Flow Duration": "Duration (µs)",
+                "Total Fwd Packets": "Fwd Pkts",
+                "Total Backward Packets": "Bwd Pkts",
+                "threat_probability": "Threat Probability",
+                "verdict": "Verdict",
+            }).drop(columns=["prediction"])
+
+            col_cfg = {
+                "Threat Probability": st.column_config.ProgressColumn(
+                    "Threat Probability", min_value=0.0, max_value=1.0, format="%.2f"
+                )
+            }
+
+            flagged = display[display["Verdict"] == "THREAT"].sort_values(
+                "Threat Probability", ascending=False
+            )
+
+            st.markdown("#### 🚨 Flagged Flows")
+            if flagged.empty:
+                st.success("No threats detected in this capture.")
+            else:
+                st.dataframe(flagged, column_config=col_cfg, use_container_width=True, hide_index=True)
+
+            with st.expander(f"All {len(display)} flows"):
+                st.dataframe(
+                    display.sort_values("Threat Probability", ascending=False),
+                    column_config=col_cfg, use_container_width=True, hide_index=True,
+                )
 
 # ---------------- CSV MODE ----------------
 else:
@@ -319,4 +350,4 @@ else:
                 st.success(f"Detected {n_threat} attacks out of {len(preds)} rows")
 
                 fig = plot_verdict_bar(n_benign, n_threat, title=f"{dataset} — {model_choice} Verdicts")
-                st.pyplot(fig, use_container_width=True)
+                st.pyplot(fig, use_container_width=False)
